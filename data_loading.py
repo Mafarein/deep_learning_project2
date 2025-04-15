@@ -10,7 +10,7 @@ UNKNOWN_LABEL = 'unknown'
 
 
 class SpeechCommandsDataset(Dataset):
-    def __init__(self, data_dir, mode='train', transform=None, silence_percentage=0.05, unknown_percentage=0):
+    def __init__(self, data_dir, mode='train', transform=None, silence_percentage=0.05, unknown_percentage=1):
 
         self.data_dir = data_dir + '/audio'
         self.transform = transform
@@ -50,57 +50,43 @@ class SpeechCommandsDataset(Dataset):
         return 'train'
 
     def _build_file_list(self):
-        all_samples = []
+        command_samples = []
+        unknown_samples = []
 
-        if self.mode == 'validation':
-
-            for file_path in self.val_list:
+        if self.mode in ['validation', 'testing']:
+            for file_path in (self.val_list if self.mode == 'validation' else self.test_list):
                 label = self._extract_label_from_path(file_path)
-
                 if label in COMMANDS:
-                    all_samples.append((file_path, label))
+                    command_samples.append((file_path, label))
                 else:
-                    all_samples.append(
-                        (file_path, UNKNOWN_LABEL))
-            return all_samples
-
-        if self.mode == 'testing':
-
-            for file_path in self.test_list:
-                label = self._extract_label_from_path(file_path)
-
-                if label in COMMANDS:
-                    all_samples.append((file_path, label))
-                else:
-                    all_samples.append(
-                        (file_path, UNKNOWN_LABEL))
+                    unknown_samples.append((file_path, UNKNOWN_LABEL))
+            silence_samples = [(None, SILENCE_LABEL)] * int(
+                len(command_samples + unknown_samples) * self.silence_percentage)
+            return command_samples + unknown_samples + silence_samples
 
         for label in os.listdir(self.data_dir):
             label_dir = os.path.join(self.data_dir, label)
-            if not os.path.isdir(label_dir):
+            if not os.path.isdir(label_dir) or label == "_background_noise_":
                 continue
+            for file_name in os.listdir(label_dir):
+                file_path = os.path.join(label, file_name)
+                set_type = self._which_set(file_path)
+                if set_type != 'train':
+                    continue
+                if label in COMMANDS:
+                    command_samples.append((file_path, label))
+                else:
+                    unknown_samples.append((file_path, UNKNOWN_LABEL))
 
-            if label == "_background_noise_":
-                continue
+        num_unknown = int(len(command_samples) * self.unknown_percentage)
+        unknown_samples = random.sample(unknown_samples, min(num_unknown, len(unknown_samples)))
 
-            if label in COMMANDS:
-                for file_name in os.listdir(label_dir):
-                    file_path = os.path.join(label, file_name)
-                    set_type = self._which_set(file_path)
-                    if set_type == self.mode:
-                        all_samples.append((file_path, label))
-            else:
-                for file_name in os.listdir(label_dir):
-                    file_path = os.path.join(label, file_name)
-                    set_type = self._which_set(file_path)
-                    if set_type == self.mode:
-                        all_samples.append((file_path, UNKNOWN_LABEL))
+        silence_samples = [(None, SILENCE_LABEL)] * int(
+            (len(command_samples) + len(unknown_samples)) * self.silence_percentage)
 
-        num_silence = int(len(all_samples) * self.silence_percentage)
-        silence_samples = [(None, SILENCE_LABEL)] * num_silence
-
-
-        return all_samples + silence_samples
+        all_samples = command_samples + unknown_samples + silence_samples
+        random.shuffle(all_samples)
+        return all_samples
 
     def __len__(self):
         return len(self.samples)
