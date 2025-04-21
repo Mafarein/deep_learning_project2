@@ -30,6 +30,23 @@ def default_parameters(model_type, lr, max_epochs, seed):
         f'saved_losses/{model_type}_constant_lr_{lr}_seed_{seed}.csv', index=False)
     torch.save(model.state_dict(), f'saved_models/{model_type}_constant_lr_{lr}_seed_{seed}.pth')
 
+def dropout(model_type, lr, max_epochs, seed, dropout_rate=0.2):
+    '''
+    Dropout with 20% dropout rate
+    '''
+    if model_type == 'transformer':
+        model = Transformer()
+    elif model_type == 'cnn':  # change name later
+        model = SimpleSpeechCommandModel(num_classes=num_classes, dropout_rate=dropout_rate)
+    else:
+        raise ValueError("Invalid model name")
+    train_loader = create_dataloader(data_dir, batch_size=32, mode='train')
+    val_loader = create_dataloader(data_dir, batch_size=32, mode='validation')
+    train_losses, val_losses = train_model(model, train_loader, val_loader, max_epochs=max_epochs, learning_rate=lr,
+                                           seed=seed)
+    pd.DataFrame({'train_loss': train_losses, 'val_loss': val_losses}).to_csv(f'saved_losses/{model_type}_dropout_{dropout_rate}_seed_{seed}.csv', index=False)
+    torch.save(model.state_dict(), f'saved_models/{model_type}_dropout_{dropout_rate}_seed_{seed}.pth')
+
 
 def load_model(model_path, num_classes, model_type="cnn", **kwargs):
     if model_type == "cnn":
@@ -69,14 +86,22 @@ def plot_confusion_matrix(cm, class_names):
 if __name__ == "__main__":
     data_dir = "data/train"
     num_classes = len(COMMANDS) + 2
-    seed = 123
-    epochs = 10
+    seed = 1
+    epochs = 50
 
-    default_parameters('cnn', lr=0.001, max_epochs=epochs, seed=seed)
+    #default_parameters('cnn', lr=0.001, max_epochs=epochs, seed=seed)
+    #dropout('cnn', lr=0.001, max_epochs=epochs, seed=seed)
 
-    model_path = 'saved_models/cnn_constant_lr_0.001_seed_123.pth'
-    model = load_model(model_path, num_classes=num_classes)
 
-    test_loader = create_dataloader(data_dir, batch_size=32, mode='testing')
-    cm = compute_confusion_matrix(model, test_loader)
-    plot_confusion_matrix(cm, class_names=COMMANDS)
+    for i in range(5, 11):
+        seed = i
+        dropout('cnn', lr=0.001, max_epochs=epochs, seed=seed, dropout_rate=0.3)
+
+
+
+    #model_path = 'saved_models/cnn_constant_lr_0.001_seed_123.pth'
+    #model = load_model(model_path, num_classes=num_classes)
+
+    #test_loader = create_dataloader(data_dir, batch_size=32, mode='testing')
+    #cm = compute_confusion_matrix(model, test_loader)
+    #plot_confusion_matrix(cm, class_names=COMMANDS)
