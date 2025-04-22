@@ -27,7 +27,7 @@ class AudioTransformer(nn.Module):
         self.input_proj = nn.Linear(n_mels, d_model)
         self.pos_encoder = PositionalEncoding(d_model)
         
-        encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, batch_first=True, dropout=0)
+        encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, batch_first=True, dropout=dropout)
         self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
 
         self.classifier = nn.Sequential(
