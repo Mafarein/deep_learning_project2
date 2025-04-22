@@ -6,18 +6,17 @@ from sklearn.metrics import confusion_matrix
 from data_loading import create_dataloader, COMMANDS
 from model import SimpleSpeechCommandModel
 from model_training import train_model
+from transformer import AudioTransformer
 
 # add unknown, silence percentage for data loader
 
-class Transformer:
-    pass
 
 def default_parameters(model_type, lr, max_epochs, seed):
     '''
     Default parameters for training
     '''
     if model_type == 'transformer':
-        model = Transformer()
+        model = AudioTransformer(n_classes=num_classes)
     elif model_type == 'cnn': #change name later
         model = SimpleSpeechCommandModel(num_classes=num_classes)
     else:
@@ -35,7 +34,7 @@ def dropout(model_type, lr, max_epochs, seed, dropout_rate=0.2):
     Dropout with 20% dropout rate
     '''
     if model_type == 'transformer':
-        model = Transformer()
+        model = AudioTransformer(n_classes=num_classes, dropout=dropout_rate)
     elif model_type == 'cnn':  # change name later
         model = SimpleSpeechCommandModel(num_classes=num_classes, dropout_rate=dropout_rate)
     else:
@@ -52,7 +51,7 @@ def load_model(model_path, num_classes, model_type="cnn", **kwargs):
     if model_type == "cnn":
         model = SimpleSpeechCommandModel(num_classes=num_classes)
     elif model_type == "transformer":
-        model = Transformer()
+        model = AudioTransformer(n_classes=num_classes)
     else:
         raise ValueError(f"Unknown model_type: {model_type}")
 
@@ -89,13 +88,15 @@ if __name__ == "__main__":
     seed = 1
     epochs = 50
 
-    #default_parameters('cnn', lr=0.001, max_epochs=epochs, seed=seed)
+    default_parameters('transformer', lr=0.0001, max_epochs=epochs, seed=seed)
     #dropout('cnn', lr=0.001, max_epochs=epochs, seed=seed)
 
 
-    for i in range(5, 11):
-        seed = i
-        dropout('cnn', lr=0.001, max_epochs=epochs, seed=seed, dropout_rate=0.3)
+    # for i in range(5, 11):
+    #     seed = i
+    #     dropout('cnn', lr=0.001, max_epochs=epochs, seed=seed, dropout_rate=0.3)
+
+    
 
 
 
