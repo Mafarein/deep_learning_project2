@@ -67,6 +67,7 @@ def train_model(model, train_loader, val_loader, max_epochs, learning_rate, lr_s
 
         if early_stopper.early_stop(average_val_loss):
             print(f'Early stopping at epoch {epoch}')
+            model.load_state_dict(early_stopper.best_model)
             break
 
         if lr_scheduling:
