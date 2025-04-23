@@ -100,13 +100,13 @@ if __name__ == "__main__":
     seed = 1
     epochs = 50
 
-    default_parameters('transformer', lr=0.0001, max_epochs=epochs, seed=seed)
+    # default_parameters('transformer', lr=0.0001, max_epochs=epochs, seed=seed)
     #dropout('cnn', lr=0.001, max_epochs=epochs, seed=seed)
 
 
-    # for i in range(5, 11):
-    #     seed = i
-    #     dropout('cnn', lr=0.001, max_epochs=epochs, seed=seed, dropout_rate=0.3)
+    for i in range(6, 11):
+        seed = i
+        default_parameters('transformer', lr=0.0001, max_epochs=epochs, seed=seed)
 
     
 

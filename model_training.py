@@ -65,7 +65,7 @@ def train_model(model, train_loader, val_loader, max_epochs, learning_rate, lr_s
 
         tqdm_epochs.set_postfix(train_loss=average_train_loss, val_loss=average_val_loss)
 
-        if early_stopper.early_stop(average_val_loss):
+        if early_stopper.early_stop(average_val_loss, model):
             print(f'Early stopping at epoch {epoch}')
             model.load_state_dict(early_stopper.best_model)
             break
