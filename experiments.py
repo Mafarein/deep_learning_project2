@@ -46,6 +46,18 @@ def dropout(model_type, lr, max_epochs, seed, dropout_rate=0.2):
     pd.DataFrame({'train_loss': train_losses, 'val_loss': val_losses}).to_csv(f'saved_losses/{model_type}_dropout_{dropout_rate}_seed_{seed}.csv', index=False)
     torch.save(model.state_dict(), f'saved_models/{model_type}_dropout_{dropout_rate}_seed_{seed}.pth')
 
+def transformer_experiments(lr, max_epochs, seed, d_model=128, nhead=4, num_layers=4, dropout=0.1):
+    '''
+    Transformer experiments with different parameters
+    '''
+    model = AudioTransformer(n_classes=num_classes, d_model=d_model, nhead=nhead, num_layers=num_layers, dropout=dropout)
+    train_loader = create_dataloader(data_dir, batch_size=32, mode='train')
+    val_loader = create_dataloader(data_dir, batch_size=32, mode='validation')
+    train_losses, val_losses = train_model(model, train_loader, val_loader, max_epochs=max_epochs, learning_rate=lr,
+                                           seed=seed)
+    pd.DataFrame({'train_loss': train_losses, 'val_loss': val_losses}).to_csv(f'saved_losses/transformer_experiment_{d_model}_{nhead}_{num_layers}_{dropout}_seed_{seed}.csv', index=False)
+    torch.save(model.state_dict(), f'saved_models/transformer_experiment_{d_model}_{nhead}_{num_layers}_{dropout}_seed_{seed}.pth')
+
 
 def load_model(model_path, num_classes, model_type="cnn", **kwargs):
     if model_type == "cnn":
