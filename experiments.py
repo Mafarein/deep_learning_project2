@@ -106,7 +106,7 @@ if __name__ == "__main__":
 
     for i in range(1, 11):
         seed = i
-        dropout('transformer', lr=0.0001, max_epochs=epochs, seed=seed, dropout_rate=0.2)
+        dropout('transformer', lr=0.0001, max_epochs=epochs, seed=seed, dropout_rate=0.3)
 
     
 
