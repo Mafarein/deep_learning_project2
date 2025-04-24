@@ -8,7 +8,7 @@ import numpy as np
 
 
 def train_model(model, train_loader, val_loader, max_epochs, learning_rate, lr_scheduling=False,
-                seed=123):
+                seed=123, weight_decay=0):
     # Set seed for reproducibility
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
@@ -22,7 +22,10 @@ def train_model(model, train_loader, val_loader, max_epochs, learning_rate, lr_s
     model = model.to(device)
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    if weight_decay != 0:
+        optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    else:
+        optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     if lr_scheduling:
         scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5)
 

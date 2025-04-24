@@ -58,6 +58,19 @@ def transformer_experiments(lr, max_epochs, seed, d_model=128, nhead=4, num_laye
     pd.DataFrame({'train_loss': train_losses, 'val_loss': val_losses}).to_csv(f'saved_losses/transformer_experiment_{d_model}_{nhead}_{num_layers}_{dropout}_seed_{seed}.csv', index=False)
     torch.save(model.state_dict(), f'saved_models/transformer_experiment_{d_model}_{nhead}_{num_layers}_{dropout}_seed_{seed}.pth')
 
+def weight_decay(model_type, lr, max_epochs, seed, weight_decay=0.01):
+    if model_type == 'transformer':
+        model = AudioTransformer(n_classes=num_classes)
+    elif model_type == 'cnn':  # change name later
+        model = SimpleSpeechCommandModel(num_classes=num_classes)
+    else:
+        raise ValueError("Invalid model name")
+    train_loader = create_dataloader(data_dir, batch_size=32, mode='train')
+    val_loader = create_dataloader(data_dir, batch_size=32, mode='validation')
+    train_losses, val_losses = train_model(model, train_loader, val_loader, max_epochs=max_epochs, learning_rate=lr,
+                                           seed=seed, weight_decay=weight_decay)
+    pd.DataFrame({'train_loss': train_losses, 'val_loss': val_losses}).to_csv(f'saved_losses/{model_type}_weight_decay_{weight_decay}_seed_{seed}.csv', index=False)
+    torch.save(model.state_dict(), f'saved_models/{model_type}_weight_decay_{weight_decay}_seed_{seed}.pth')
 
 def load_model(model_path, num_classes, model_type="cnn", **kwargs):
     if model_type == "cnn":
@@ -104,11 +117,11 @@ if __name__ == "__main__":
     #dropout('cnn', lr=0.001, max_epochs=epochs, seed=seed)
 
 
-    for i in range(1, 11):
-        seed = i
-        dropout('transformer', lr=0.0001, max_epochs=epochs, seed=seed, dropout_rate=0.3)
-
-    
+    # for i in range(1, 11):
+    #     seed = i
+    #     dropout('transformer', lr=0.0001, max_epochs=epochs, seed=seed, dropout_rate=0.3)
+    for i in range(2, 4):
+        weight_decay('transformer', lr=0.0001, max_epochs=epochs, seed=i, weight_decay=0.01)
 
 
 
