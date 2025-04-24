@@ -104,9 +104,9 @@ if __name__ == "__main__":
     #dropout('cnn', lr=0.001, max_epochs=epochs, seed=seed)
 
 
-    for i in range(6, 11):
+    for i in range(1, 11):
         seed = i
-        default_parameters('transformer', lr=0.0001, max_epochs=epochs, seed=seed)
+        default_parameters('transformer', lr=0.001, max_epochs=epochs, seed=seed)
 
     
 
