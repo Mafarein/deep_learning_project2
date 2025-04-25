@@ -121,7 +121,7 @@ if __name__ == "__main__":
     #     seed = i
     #     dropout('transformer', lr=0.0001, max_epochs=epochs, seed=seed, dropout_rate=0.3)
     for i in range(1, 6):
-        transformer_experiments(lr=0.0001, max_epochs=epochs, seed=i, num_layers=6)
+        transformer_experiments(lr=0.0001, max_epochs=epochs, seed=i, nhead=8)
 
 
 
