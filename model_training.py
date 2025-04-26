@@ -8,7 +8,7 @@ import numpy as np
 
 
 def train_model(model, train_loader, val_loader, max_epochs, learning_rate, lr_scheduling=False,
-                seed=123, weight_decay=0):
+                seed=123, weight_decay=0, class_weights=None):
     # Set seed for reproducibility
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
@@ -19,9 +19,14 @@ def train_model(model, train_loader, val_loader, max_epochs, learning_rate, lr_s
     random.seed(seed)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print("device: ", device)
     model = model.to(device)
 
-    criterion = nn.CrossEntropyLoss()
+    if class_weights is not None:
+        criterion = nn.CrossEntropyLoss(weight=class_weights.to(device))
+    else:
+        criterion = nn.CrossEntropyLoss()
+
     if weight_decay != 0:
         optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     else:
@@ -70,7 +75,7 @@ def train_model(model, train_loader, val_loader, max_epochs, learning_rate, lr_s
 
         if early_stopper.early_stop(average_val_loss, model):
             print(f'Early stopping at epoch {epoch}')
-            model.load_state_dict(early_stopper.best_model)
+            #model.load_state_dict(early_stopper.best_model)
             break
 
         if lr_scheduling:

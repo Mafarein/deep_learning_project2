@@ -1,6 +1,7 @@
 import os
 import torch
 import torchaudio
+from overrides.typing_utils import unknown
 from torch.utils.data import Dataset, DataLoader
 import random
 
@@ -10,7 +11,7 @@ UNKNOWN_LABEL = 'unknown'
 
 
 class SpeechCommandsDataset(Dataset):
-    def __init__(self, data_dir, mode='train', transform=None, silence_percentage=0.05, unknown_percentage=1):
+    def __init__(self, data_dir, mode='train', transform=None, silence_percentage=0.05, unknown_percentage=1.0):
 
         self.data_dir = data_dir + '/audio'
         self.transform = transform
@@ -128,8 +129,8 @@ class SpeechCommandsDataset(Dataset):
         return file_path.split('/')[0]
 
 
-def create_dataloader(data_dir, batch_size=32, mode='train', transform=None):
-    dataset = SpeechCommandsDataset(data_dir, mode=mode, transform=transform)
+def create_dataloader(data_dir, batch_size=32, mode='train', transform=None, unknown_percentage=1):
+    dataset = SpeechCommandsDataset(data_dir, mode=mode, transform=transform, unknown_percentage=unknown_percentage)
     loader = DataLoader(dataset, batch_size=batch_size, shuffle=(mode == 'train'))
     return loader
 

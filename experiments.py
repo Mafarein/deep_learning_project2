@@ -2,6 +2,7 @@ import pandas as pd
 import torch
 from matplotlib import pyplot as plt
 import seaborn as sns
+from overrides.typing_utils import unknown
 from sklearn.metrics import confusion_matrix
 from data_loading import create_dataloader, COMMANDS
 from model import SimpleSpeechCommandModel
@@ -58,6 +59,38 @@ def transformer_experiments(lr, max_epochs, seed, d_model=128, nhead=4, num_laye
     pd.DataFrame({'train_loss': train_losses, 'val_loss': val_losses}).to_csv(f'saved_losses/transformer_experiment_{d_model}_{nhead}_{num_layers}_{dropout}_seed_{seed}.csv', index=False)
     torch.save(model.state_dict(), f'saved_models/transformer_experiment_{d_model}_{nhead}_{num_layers}_{dropout}_seed_{seed}.pth')
 
+def class_weights(model_type, lr, max_epochs, seed):
+    '''
+        Default parameters for training with  class weighting
+    '''
+    if model_type == 'transformer':
+        model = AudioTransformer(n_classes=num_classes)
+    elif model_type == 'cnn':
+        model = SimpleSpeechCommandModel(num_classes=num_classes)
+    else:
+        raise ValueError('Unknown model type')
+
+    train_loader = create_dataloader(data_dir, batch_size=32, mode='train')
+    val_loader = create_dataloader(data_dir, batch_size=32, mode='validation')
+
+    class_counts = [0] * num_classes
+    for inputs, labels in train_loader:
+        for label in labels:
+            class_counts[label.item()] += 1
+
+    total_samples = sum(class_counts)
+    class_w = [total_samples / count if count > 0 else 1 for count in class_counts]
+
+    class_weights = torch.tensor(class_w, dtype=torch.float) #it might be good to check different proportions of classes
+
+
+    train_losses, val_losses = train_model(model, train_loader, val_loader, max_epochs=max_epochs,
+                                           learning_rate=lr, seed=seed, class_weights=class_weights)
+
+    pd.DataFrame({'train_loss': train_losses, 'val_loss': val_losses}).to_csv(
+        f'saved_losses/{model_type}_class_weights_seed_{seed}.csv', index=False)
+    torch.save(model.state_dict(), f'saved_models/{model_type}_class_weights_seed_{seed}.pth')
+
 def weight_decay(model_type, lr, max_epochs, seed, weight_decay=0.01):
     if model_type == 'transformer':
         model = AudioTransformer(n_classes=num_classes)
@@ -71,6 +104,24 @@ def weight_decay(model_type, lr, max_epochs, seed, weight_decay=0.01):
                                            seed=seed, weight_decay=weight_decay)
     pd.DataFrame({'train_loss': train_losses, 'val_loss': val_losses}).to_csv(f'saved_losses/{model_type}_weight_decay_{weight_decay}_seed_{seed}.csv', index=False)
     torch.save(model.state_dict(), f'saved_models/{model_type}_weight_decay_{weight_decay}_seed_{seed}.pth')
+
+def sampling(model_type, lr, max_epochs, seed, unknown_percentage):
+    '''
+    Default parameters for training
+    '''
+    if model_type == 'transformer':
+        model = AudioTransformer(n_classes=num_classes)
+    elif model_type == 'cnn': #change name later
+        model = SimpleSpeechCommandModel(num_classes=num_classes)
+    else:
+        raise ValueError('Unknown model type')
+    train_loader = create_dataloader(data_dir, batch_size=32, mode='train', unknown_percentage=unknown_percentage)
+    val_loader = create_dataloader(data_dir, batch_size=32, mode='validation')
+    train_losses, val_losses = train_model(model, train_loader, val_loader, max_epochs=max_epochs, learning_rate=lr,
+                                           seed=seed)
+    pd.DataFrame({'train_loss': train_losses, 'val_loss': val_losses}).to_csv(
+        f'saved_losses/{model_type}_sampling_{unknown_percentage}_seed_{seed}.csv', index=False)
+    torch.save(model.state_dict(), f'saved_models/{model_type}_sampling_{unknown_percentage}_seed_{seed}.pth')
 
 def load_model(model_path, num_classes, model_type="cnn", **kwargs):
     if model_type == "cnn":
@@ -111,7 +162,7 @@ if __name__ == "__main__":
     data_dir = "data/train"
     num_classes = len(COMMANDS) + 2
     seed = 1
-    epochs = 50
+    epochs = 5
 
     # default_parameters('transformer', lr=0.0001, max_epochs=epochs, seed=seed)
     #dropout('cnn', lr=0.001, max_epochs=epochs, seed=seed)
@@ -120,8 +171,7 @@ if __name__ == "__main__":
     # for i in range(1, 11):
     #     seed = i
     #     dropout('transformer', lr=0.0001, max_epochs=epochs, seed=seed, dropout_rate=0.3)
-    for i in range(1, 6):
-        transformer_experiments(lr=0.0001, max_epochs=epochs, seed=i, d_model=512)
+
 
 
 
