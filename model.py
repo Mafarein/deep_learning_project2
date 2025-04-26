@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# Simple cnn for testing purpose
 
 class SimpleSpeechCommandModel(nn.Module):
     def __init__(self, num_classes, dropout_rate=0.0):
