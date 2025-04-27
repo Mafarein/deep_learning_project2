@@ -3,6 +3,9 @@ import torch.nn as nn
 import torchaudio
 
 class PositionalEncoding(nn.Module):
+    '''
+    https://stackoverflow.com/questions/77444485/using-positional-encoding-in-pytorch
+    '''
     def __init__(self, d_model, max_len=100):
         super().__init__()
         pe = torch.zeros(max_len, d_model)
