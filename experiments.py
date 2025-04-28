@@ -46,7 +46,7 @@ def dropout(model_type, lr, max_epochs, seed, dropout_rate=0.2):
     pd.DataFrame({'train_loss': train_losses, 'val_loss': val_losses}).to_csv(f'saved_losses/{model_type}_dropout_{dropout_rate}_seed_{seed}.csv', index=False)
     torch.save(model.state_dict(), f'saved_models/{model_type}_dropout_{dropout_rate}_seed_{seed}.pth')
 
-def transformer_experiments(lr, max_epochs, seed, d_model=128, nhead=4, num_layers=4, dropout=0):
+def transformer_experiments(lr, max_epochs, seed, d_model=128, nhead=4, num_layers=4, dropout=0, weight_decay=0):
     '''
     Transformer experiments with different parameters
     '''
@@ -54,7 +54,7 @@ def transformer_experiments(lr, max_epochs, seed, d_model=128, nhead=4, num_laye
     train_loader = create_dataloader(data_dir, batch_size=32, mode='train')
     val_loader = create_dataloader(data_dir, batch_size=32, mode='validation')
     train_losses, val_losses = train_model(model, train_loader, val_loader, max_epochs=max_epochs, learning_rate=lr,
-                                           seed=seed)
+                                           seed=seed, weight_decay=weight_decay)
     pd.DataFrame({'train_loss': train_losses, 'val_loss': val_losses}).to_csv(f'saved_losses/transformer_experiment_{d_model}_{nhead}_{num_layers}_{dropout}_seed_{seed}.csv', index=False)
     torch.save(model.state_dict(), f'saved_models/transformer_experiment_{d_model}_{nhead}_{num_layers}_{dropout}_seed_{seed}.pth')
 
@@ -120,8 +120,17 @@ if __name__ == "__main__":
     # for i in range(1, 11):
     #     seed = i
     #     dropout('transformer', lr=0.0001, max_epochs=epochs, seed=seed, dropout_rate=0.3)
-    for i in range(1, 6):
-        dropout('transformer', lr=0.0001, max_epochs=50, seed=i, dropout_rate=0.1)
+    for i in range(3, 6):
+        transformer_experiments(
+            lr=0.0001,
+            max_epochs=50,
+            seed=i,
+            d_model=256,
+            nhead=4,
+            num_layers=6,
+            weight_decay=0.01,
+            dropout=0.1
+        )
 
 
 
