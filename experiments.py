@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
 from data_loading import create_dataloader, COMMANDS
-from model import SimpleSpeechCommandModel
+from model import SpeechCommandModel
 from model_training import train_model
 from transformer import AudioTransformer
 
@@ -18,7 +18,7 @@ def default_parameters(model_type, lr, max_epochs, seed):
     if model_type == 'transformer':
         model = AudioTransformer(n_classes=num_classes)
     elif model_type == 'cnn': #change name later
-        model = SimpleSpeechCommandModel(num_classes=num_classes)
+        model = SpeechCommandModel(num_classes=num_classes)
     else:
         raise ValueError('Unknown model type')
     train_loader = create_dataloader(data_dir, batch_size=32, mode='train')
@@ -36,7 +36,7 @@ def dropout(model_type, lr, max_epochs, seed, dropout_rate=0.2):
     if model_type == 'transformer':
         model = AudioTransformer(n_classes=num_classes, dropout=dropout_rate)
     elif model_type == 'cnn':  # change name later
-        model = SimpleSpeechCommandModel(num_classes=num_classes, dropout_rate=dropout_rate)
+        model = SpeechCommandModel(num_classes=num_classes, dropout_rate=dropout_rate)
     else:
         raise ValueError("Invalid model name")
     train_loader = create_dataloader(data_dir, batch_size=32, mode='train')
@@ -62,7 +62,7 @@ def weight_decay(model_type, lr, max_epochs, seed, weight_decay=0.01):
     if model_type == 'transformer':
         model = AudioTransformer(n_classes=num_classes)
     elif model_type == 'cnn':  # change name later
-        model = SimpleSpeechCommandModel(num_classes=num_classes)
+        model = SpeechCommandModel(num_classes=num_classes)
     else:
         raise ValueError("Invalid model name")
     train_loader = create_dataloader(data_dir, batch_size=32, mode='train')
@@ -74,7 +74,7 @@ def weight_decay(model_type, lr, max_epochs, seed, weight_decay=0.01):
 
 def load_model(model_path, num_classes, model_type="cnn", **kwargs):
     if model_type == "cnn":
-        model = SimpleSpeechCommandModel(num_classes=num_classes)
+        model = SpeechCommandModel(num_classes=num_classes)
     elif model_type == "transformer":
         model = AudioTransformer(n_classes=num_classes)
     else:
@@ -83,6 +83,57 @@ def load_model(model_path, num_classes, model_type="cnn", **kwargs):
     model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
     model.eval()
     return model
+
+def class_weights(model_type, lr, max_epochs, seed):
+    '''
+        Default parameters for training with  class weighting
+    '''
+    if model_type == 'transformer':
+        model = AudioTransformer(n_classes=num_classes)
+    elif model_type == 'cnn':
+        model = SpeechCommandModel(num_classes=num_classes)
+    else:
+        raise ValueError('Unknown model type')
+
+    train_loader = create_dataloader(data_dir, batch_size=32, mode='train')
+    val_loader = create_dataloader(data_dir, batch_size=32, mode='validation')
+
+    class_counts = [0] * num_classes
+    for inputs, labels in train_loader:
+        for label in labels:
+            class_counts[label.item()] += 1
+
+    total_samples = sum(class_counts)
+    class_w = [total_samples / count if count > 0 else 1 for count in class_counts]
+
+    class_weights = torch.tensor(class_w, dtype=torch.float)
+
+
+    train_losses, val_losses = train_model(model, train_loader, val_loader, max_epochs=max_epochs,
+                                           learning_rate=lr, seed=seed, class_weights=class_weights)
+
+    pd.DataFrame({'train_loss': train_losses, 'val_loss': val_losses}).to_csv(
+        f'saved_losses/{model_type}_class_weights_seed_{seed}.csv', index=False)
+    torch.save(model.state_dict(), f'saved_models/{model_type}_class_weights_seed_{seed}.pth')
+
+def sampling(model_type, lr, max_epochs, seed, unknown_percentage):
+    '''
+    Default parameters for training
+    '''
+    if model_type == 'transformer':
+        model = AudioTransformer(n_classes=num_classes)
+    elif model_type == 'cnn': #change name later
+        model = SpeechCommandModel(num_classes=num_classes)
+    else:
+        raise ValueError('Unknown model type')
+    train_loader = create_dataloader(data_dir, batch_size=32, mode='train', unknown_percentage=unknown_percentage)
+    val_loader = create_dataloader(data_dir, batch_size=32, mode='validation')
+    train_losses, val_losses = train_model(model, train_loader, val_loader, max_epochs=max_epochs, learning_rate=lr,
+                                           seed=seed)
+    pd.DataFrame({'train_loss': train_losses, 'val_loss': val_losses}).to_csv(
+        f'saved_losses/{model_type}_sampling_{unknown_percentage}_seed_{seed}.csv', index=False)
+    torch.save(model.state_dict(), f'saved_models/{model_type}_sampling_{unknown_percentage}_seed_{seed}.pth')
+
 
 
 def compute_confusion_matrix(model, data_loader):
