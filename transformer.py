@@ -4,7 +4,9 @@ import torchaudio
 
 class PositionalEncoding(nn.Module):
     '''
+    Based on an answer from StackOverflow:
     https://stackoverflow.com/questions/77444485/using-positional-encoding-in-pytorch
+    which is based on PyTorch's documentation.
     '''
     def __init__(self, d_model, max_len=100):
         super().__init__()
@@ -20,6 +22,10 @@ class PositionalEncoding(nn.Module):
         return x
 
 class AudioTransformer(nn.Module):
+    '''
+    The implementantion is based on the approach described in an article:
+    https://n8henrie.com/2021/08/writing-a-transformer-classifier-in-pytorch/
+    '''
     def __init__(self, n_classes, n_mels=64, d_model=128, nhead=4, num_layers=4, dropout=0):
         super().__init__()
         self.mel_spec = torchaudio.transforms.MelSpectrogram(
