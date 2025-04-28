@@ -1,1 +1,3 @@
-# deep_learning_project2
+## Deep Learning Project 2 - Transformers
+
+This project investigates neural network architectures for speech command classification, with a focus on Transformer-based models compared to Convolutional Neural Networks (CNNs). Using the Speech Commands Dataset, we evaluate the impact of various hyperparameters including learning rate, dropout, and model architecture. Special attention is given to handling "unknown" classes. Experimental results highlight that Transformer models, with appropriate tuning, can achieve competitive performance, although CNNs provide strong baselines with simpler architectures.
